@@ -1,6 +1,6 @@
 {
   "name": "@buddyshome/homebridge-shelly-ds9",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "description": "Homebridge plugin for the next generation of Shelly devices",
   "main": "dist/index.js",
   "scripts": {
