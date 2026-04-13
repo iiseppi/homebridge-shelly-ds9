@@ -10,7 +10,7 @@ export type AccessoryId = string;
 export type AccessoryUuid = string;
 
 /**
- * Represents a HomeKit accessory by iiseppi.
+ * iiseppi's HomeKit Accessory with History Support
  */
 export class Accessory {
   readonly uuid: AccessoryUuid;
@@ -48,7 +48,7 @@ export class Accessory {
 
     this._platformAccessory = platform.getAccessory(this.uuid) || null;
     if (this._platformAccessory !== null) {
-      log.debug(`Accessory loaded from cache (ID: ${id}) - iiseppi edition`);
+      log.debug(`[iiseppi] Accessory loaded from cache: ${name}`);
     }
 
     this.update();
@@ -59,6 +59,9 @@ export class Accessory {
     return this;
   }
 
+  /**
+   * Yleinen metodi historian lisäämiseen
+   */
   addHistoryEntry(entry: Record<string, number>) {
     if (this.fakegatoHistory) {
       if (!entry.time) {
@@ -69,12 +72,21 @@ export class Accessory {
   }
 
   /**
-   * Specifically handles temperature updates for DS18B20 (temperature:100)
-   * iiseppi: This will be called when the Add-on reports temperature.
+   * IISIPPI: Päivittää lämpötilan (temperature:100) historiaan
    */
   updateTemperature(temp: number) {
-    this.log.debug(`[iiseppi-history] Updating temperature: ${temp}°C`);
+    this.log.debug(`[iiseppi-history] Lämpötila päivitetty: ${temp}°C`);
     this.addHistoryEntry({ temp: temp });
+  }
+
+  /**
+   * IISIPPI: Päivittää oven tilan (input:0) historiaan
+   * status 1 = Auki, status 0 = Kiinni
+   */
+  updateDoorStatus(isOpen: boolean) {
+    const status = isOpen ? 1 : 0;
+    this.log.debug(`[iiseppi-history] Oven tila päivitetty: ${isOpen ? 'AUKI' : 'KIINNI'}`);
+    this.addHistoryEntry({ status: status });
   }
 
   protected update() {
@@ -92,27 +104,29 @@ export class Accessory {
   protected activate() {
     if (this._platformAccessory === null) {
       this._platformAccessory = this.createPlatformAccessory();
-      this.log.debug(`Accessory activated (ID: ${this.id}) by iiseppi`);
+      this.log.debug(`[iiseppi] Accessory activated: ${this.name}`);
     }
 
+    // Alustetaan Fakegato (Eve historia)
     if (this.fakegatoHistory === null) {
       try {
+        // Käytetään 'weather' tyyppiä, koska se tukee lämpötilaa ja statusta
         this.fakegatoHistory = new FakegatoHistoryService(
           this._platformAccessory,
           this.platform,
         );
-        this.log.debug('Fakegato history service initialized for Eve app');
+        this.log.debug('[iiseppi] Eve-historia alustettu');
       } catch (e) {
-        this.log.error('Failed to initialize fakegato history:', e instanceof Error ? e.message : e);
+        this.log.error('Fakegato hiba:', e instanceof Error ? e.message : e);
       }
     }
 
     for (const a of this.abilities) {
       try {
-        // FIXED: Removed 4th argument 'this' to fix build error
+        // FIXED: Vain 3 argumenttia build-virheen välttämiseksi
         a.setup(this._platformAccessory, this.platform, this.log);
       } catch (e) {
-        this.log.error('Failed to setup ability:', e instanceof Error ? e.message : e);
+        this.log.error('Ability setup failed:', e instanceof Error ? e.message : e);
       }
     }
 
@@ -127,7 +141,6 @@ export class Accessory {
     if (this._platformAccessory !== null) {
       this.platform.removeAccessory(this._platformAccessory);
       this._platformAccessory = null;
-      this.log.debug(`Accessory deactivated (ID: ${this.id})`);
     }
   }
 
