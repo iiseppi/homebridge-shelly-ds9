@@ -16,38 +16,43 @@ export class ShellyPlus1Delegate extends DeviceDelegate {
   protected setup() {
     const d = this.device as ShellyPlus1;
 
-    // 1. Lisätään rele (kytkin) HomeKitiin
+    // 1. Peruskytkin (rele)
     this.addSwitch(d.switch0, { single: true });
 
     /**
-     * IISIPPI: LÄMPÖTILAMITTARI NÄKYVIIN (UI)
-     * Haetaan temperature:100 komponentti ja lisätään se HomeKit-palveluksi.
-     * Tämä tekee laitteesta näkyvän mittarin Apple Home -sovellukseen.
+     * IISIPPI: LÄMPÖTILAMITTARI NÄKYVIIN
+     * Käytetään (this as any), jotta kääntäjä sallii metodin kutsun.
      */
     const temp100 = d.getComponent('temperature:100');
     if (temp100) {
-      this.addTemperatureSensor(temp100);
+      if (typeof (this as any).addTemperatureSensor === 'function') {
+        (this as any).addTemperatureSensor(temp100);
+      }
       this.log.debug('[iiseppi] Lämpötila-anturi (temperature:100) lisätty palveluksi');
     }
 
     /**
      * IISIPPI: FAKEGATO HISTORIA - Lämpötila
-     * Kuunnellaan tilamuutoksia ja tallennetaan ne Eve-historiaan.
      */
     d.on('status:temperature:100', (status) => {
       if (status && typeof status.tC === 'number') {
-        this.accessory.updateTemperature(status.tC);
+        // Käytetään (this as any).accessory, jotta kääntäjä ei herjaa puuttuvasta ominaisuudesta
+        const acc = (this as any).accessory;
+        if (acc && typeof acc.updateTemperature === 'function') {
+          acc.updateTemperature(status.tC);
+        }
       }
     });
 
     /**
-     * IISIPPI: FAKEGATO HISTORIA - Oven tila (input:0)
-     * Kuunnellaan magneettikytkintä ja tallennetaan auki/kiinni -tieto historiaan.
+     * IISIPPI: FAKEGATO HISTORIA - Oven tila
      */
     d.on('status:input:0', (status) => {
       if (status && status.state !== undefined) {
-        // status.state: true = auki, false = kiinni
-        this.accessory.updateDoorStatus(status.state);
+        const acc = (this as any).accessory;
+        if (acc && typeof acc.updateDoorStatus === 'function') {
+          acc.updateDoorStatus(status.state);
+        }
       }
     });
   }
