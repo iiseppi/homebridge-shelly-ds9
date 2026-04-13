@@ -30,4 +30,3 @@ DeviceDelegate.registerDelegate(
   ShellyPlus1MiniV3,
   ShellyPlugSGen3EU,
 );
-
