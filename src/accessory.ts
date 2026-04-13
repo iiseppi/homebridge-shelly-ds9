@@ -3,6 +3,7 @@ import { PlatformAccessory } from 'homebridge';
 
 import { Ability } from './abilities';
 import { DeviceLogger } from './utils/device-logger';
+import { FakegatoHistoryService } from './utils/fakegato-history';
 import { ShellyPlatform } from './platform';
 
 export type AccessoryId = string;
@@ -31,6 +32,11 @@ export class Accessory {
    * Holds this accessory's abilities.
    */
   readonly abilities: Ability[];
+
+  /**
+   * Fakegato history service for this accessory.
+   */
+  private fakegatoHistory: FakegatoHistoryService | null = null;
 
   private _active = true;
 
@@ -94,6 +100,16 @@ export class Accessory {
   }
 
   /**
+   * Adds a history entry to the fakegato history service.
+   * @param entry - The history entry to add.
+   */
+  addHistoryEntry(entry: Record<string, number>) {
+    if (this.fakegatoHistory) {
+      this.fakegatoHistory.addEntry(entry);
+    }
+  }
+
+  /**
    * Updates this accessory based on whether it is active.
    */
   protected update() {
@@ -127,10 +143,23 @@ export class Accessory {
       this.log.debug(`Accessory activated (ID: ${this.id})`);
     }
 
+    // Initialize fakegato history service
+    if (this.fakegatoHistory === null) {
+      try {
+        this.fakegatoHistory = new FakegatoHistoryService(
+          this._platformAccessory,
+          this.platform,
+        );
+        this.log.debug('Fakegato history service initialized');
+      } catch (e) {
+        this.log.error('Failed to initialize fakegato history:', e instanceof Error ? e.message : e);
+      }
+    }
+
     // setup all abilities
     for (const a of this.abilities) {
       try {
-        a.setup(this._platformAccessory, this.platform, this.log);
+        a.setup(this._platformAccessory, this.platform, this.log, this);
       } catch (e) {
         this.log.error('Failed to setup ability:', e instanceof Error ? e.message : e);
         this.log.debug('Accessory ID:', this.id);
@@ -160,6 +189,9 @@ export class Accessory {
         }
       }
     }
+
+    // Clear fakegato history service
+    this.fakegatoHistory = null;
 
     if (this._platformAccessory !== null) {
       // unregister the platform accessory
@@ -212,4 +244,3 @@ export class Accessory {
     }
   }
 }
-
