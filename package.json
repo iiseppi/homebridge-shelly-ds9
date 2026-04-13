@@ -1,20 +1,36 @@
 {
-  "name": "homebridge-shelly-ds9",
+  "name": "homebridge-shelly-ds9-history",
   "version": "1.0.0",
-  "description": "A Homebridge plugin for Shelly devices.",
-  "main": "index.js",
+  "description": "iiseppi's Shelly DS9 plugin with Eve History support.",
+  "main": "dist/index.js",
   "scripts": {
-    "test": "echo 'Error: no test specified' && exit 1"
+    "build": "tsc",
+    "test": "echo 'Error: no test specified' && exit 1",
+    "prepublishOnly": "npm run build"
+  },
+  "engines": {
+    "node": ">=24.0.0",
+    "homebridge": ">=2.0.0-beta.0"
+  },
+  "keywords": [
+    "shelly",
+    "homebridge",
+    "homebridge-plugin",
+    "iiseppi"
+  ],
+  "author": "iiseppi",
+  "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/iiseppi/homebridge-shelly-ds9-history.git"
   },
   "dependencies": {
     "@buddyshome/shellies-ds9": "^2.1.3",
-    "fakegato-history": "^0.5.0"
+    "fakegato-history": "^0.5.6"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/iiseppi/homebridge-shelly-ds9.git"
-  },
-  "keywords": [],
-  "author": "iiseppi",
-  "license": "ISC"
+  "devDependencies": {
+    "@types/node": "^25.6.0",
+    "homebridge": "^1.11.4",
+    "typescript": "^6.0.2"
+  }
 }
